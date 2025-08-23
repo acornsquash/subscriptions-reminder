@@ -2,6 +2,7 @@ import json
 import os
 import click
 from datetime import datetime
+from subscriptions_cli.email_util import send_email
 
 DATA_FILE = os.path.expanduser("~/.subscriptions.json")
 
@@ -72,10 +73,11 @@ def update(name, cost, renewal, interval, active):
         click.echo(f"🙅🏼‍♀️ Subscription not found: {name}")
 
 @cli.command()
-def auto_update_daily():
+def daily():
     data = load_data()
     today = datetime.today().date()
     updated = []
+    messages = []
 
     """Check for renewals"""
     click.echo("checking...")
@@ -83,7 +85,9 @@ def auto_update_daily():
         renewal_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
         days_until = (renewal_date - today).days
         if days_until <= 2:
-            click.echo(f"⚠️  {sub['name']} renews tomorrow at (${sub['cost']})")
+            msg = f"⚠️  {sub['name']} renews tomorrow at (${sub['cost']})"
+            messages.append(msg)
+            click.echo(msg)
 
     """Automatically update any subscriptions whose renewal date has passed"""
 
@@ -106,9 +110,17 @@ def auto_update_daily():
 
     if updated:
         save_data(data)
-        click.echo("🔄 Auto-updated renewals:\n" + "\n".join(updated))
+        msg = "🔄 Auto-updated renewals:\n" + "\n".join(updated)
+        messages.append(msg)
+        click.echo(msg)
+
     else:
-        click.echo("✨ No renewals to update today")
+        msg = "✨ No renewals to update today"
+        messages.append(msg)
+        click.echo(msg)
+    
+    email_body = "\n".join(messages)
+    send_email("Subscriptions update", email_body)
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ jobs:
 
       - name: Run subscription reminder
         run: |
-          poetry run auto_update
+          poetry run subscriptions daily
         env:
           EMAIL_TO: ${{ secrets.EMAIL }}
           EMAIL_FROM: ${{ secrets.EMAIL }}
