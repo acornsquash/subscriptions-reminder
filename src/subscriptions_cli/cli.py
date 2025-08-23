@@ -22,7 +22,7 @@ def cli():
 
 # add a new subscription
 @cli.command()
-@click.argument("name", type=str, required=True)
+@click.argument("name")
 @click.option("--cost", type=float, required=True)
 @click.option("--renewal", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
 @click.option("--interval", type=click.Choice(["monthly", "yearly"]), required=True)
@@ -33,19 +33,20 @@ def add(name, cost, renewal, interval):
         "name": name,
         "cost": cost,
         "renewal_date": renewal.strftime("%Y-%m-%d"),
-        "interval": interval
+        "interval": interval,
+        "active": "true"
     })
     save_data(data)
     click.echo(f"✨ Added subscription: {name}")
 
 # change a subscription's data, also update the renewal date once it passes
 @cli.command()
-@click.argument("name", type=str, required=True)
+@click.argument("name")
 @click.option("--cost", type=float, help="New cost")
 @click.option("--renewal", type=click.DateTime(formats=["%Y-%m-%d"]), help="New renewal date")
 @click.option("--interval", type=click.Choice(["monthly", "yearly"]), help="Update billing interval")
-@click.option("--bump", is_flag=True, help="Automatically bump renewal to next cycle")
-def update(name, cost, renewal, interval, bump):
+@click.option("--active", type=click.Choice(["true", "false"]), help="set active or inactive")
+def update(name, cost, renewal, interval, active):
     """Update an existing subscription"""
     data = load_data()
     updated = False
@@ -58,16 +59,8 @@ def update(name, cost, renewal, interval, bump):
                 sub["renewal_date"] = renewal.strftime("%Y-%m-%d")
             if interval:
                 sub["interval"] = interval
-            if bump:
-                old_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
-                if sub["interval"] == "monthly":
-                    new_date = old_date.replace(
-                        month=old_date.month + 1 if old_date.month < 12 else 1,
-                        year=old_date.year if old_date.month < 12 else old_date.year + 1
-                    )
-                else:  # yearly
-                    new_date = old_date.replace(year=old_date.year + 1)
-                sub["renewal_date"] = new_date.strftime("%Y-%m-%d")
+            if active:
+                sub["active"] = active
 
             updated = True
             break
@@ -77,6 +70,37 @@ def update(name, cost, renewal, interval, bump):
         click.echo(f"✨ Updated {name}")
     else:
         click.echo(f"🙅🏼‍♀️ Subscription not found: {name}")
+
+@cli.command()
+def auto_update():
+    """Automatically update any subscriptions whose renewal date has passed"""
+    data = load_data()
+    today = datetime.today().date()
+    bumped = []
+
+    for sub in data:
+        renewal_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
+        if today > renewal_date:  # renewal date has passed
+            if sub["interval"] == "monthly":
+                # move forward one month
+                month = renewal_date.month + 1
+                year = renewal_date.year
+                if month > 12:
+                    month = 1
+                    year += 1
+                new_date = renewal_date.replace(year=year, month=month)
+            else:  # yearly
+                new_date = renewal_date.replace(year=renewal_date.year + 1)
+
+            sub["renewal_date"] = new_date.strftime("%Y-%m-%d")
+            bumped.append(f"{sub['name']} → {sub['renewal_date']}")
+
+    if bumped:
+        save_data(data)
+        click.echo("🔄 Auto-updated renewals:\n" + "\n".join(bumped))
+    else:
+        click.echo("✨ No renewals to update today")
+
 
 
 @cli.command()
