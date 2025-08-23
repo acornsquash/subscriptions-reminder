@@ -72,11 +72,20 @@ def update(name, cost, renewal, interval, active):
         click.echo(f"🙅🏼‍♀️ Subscription not found: {name}")
 
 @cli.command()
-def auto_update():
-    """Automatically update any subscriptions whose renewal date has passed"""
+def auto_update_daily():
     data = load_data()
     today = datetime.today().date()
-    bumped = []
+    updated = []
+
+    """Check for renewals"""
+    click.echo("checking...")
+    for sub in data:
+        renewal_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
+        days_until = (renewal_date - today).days
+        if days_until <= 2:
+            click.echo(f"⚠️  {sub['name']} renews tomorrow at (${sub['cost']})")
+
+    """Automatically update any subscriptions whose renewal date has passed"""
 
     for sub in data:
         renewal_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
@@ -93,27 +102,14 @@ def auto_update():
                 new_date = renewal_date.replace(year=renewal_date.year + 1)
 
             sub["renewal_date"] = new_date.strftime("%Y-%m-%d")
-            bumped.append(f"{sub['name']} → {sub['renewal_date']}")
+            updated.append(f"{sub['name']} → {sub['renewal_date']}")
 
-    if bumped:
+    if updated:
         save_data(data)
-        click.echo("🔄 Auto-updated renewals:\n" + "\n".join(bumped))
+        click.echo("🔄 Auto-updated renewals:\n" + "\n".join(updated))
     else:
         click.echo("✨ No renewals to update today")
 
-
-
-@cli.command()
-def check():
-    """Check for upcoming renewals"""
-    data = load_data()
-    today = datetime.today().date()
-
-    for sub in data:
-        renewal_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
-        days_until = (renewal_date - today).days
-        if days_until <= 1:
-            click.echo(f"⚠️  {sub['name']} renews tomorrow at (${sub['cost']})")
 
 if __name__ == "__main__":
     cli()

@@ -1,0 +1,36 @@
+name: Daily Subscription Reminder
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Every day at 5am EST
+  workflow_dispatch:     # Allows manual trigger
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13.7'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run subscription reminder
+        run: |
+          poetry run auto_update
+        env:
+          EMAIL_TO: ${{ secrets.EMAIL }}
+          EMAIL_FROM: ${{ secrets.EMAIL }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
