@@ -84,8 +84,8 @@ def daily():
     for sub in data:
         renewal_date = datetime.strptime(sub["renewal_date"], "%Y-%m-%d").date()
         days_until = (renewal_date - today).days
-        if days_until <= 2:
-            msg = f"⚠️  {sub['name']} renews tomorrow at (${sub['cost']})"
+        if days_until <= 7:
+            msg = f"⚠️  {sub['name']} renews soon (${sub ["renewal_date"]}) at (${sub['cost']})"
             messages.append(msg)
             click.echo(msg)
 
