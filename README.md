@@ -6,4 +6,7 @@ For privacy, the subscriptions.json exists locally on your machine. To use the e
 to add or change a subscription
 poetry run subscriptions add “Hulu” --cost 18.99 --renewal 2025-08-27 --interval monthly
 
+to run the program 
+poetry run subscriptions daily
+
 
