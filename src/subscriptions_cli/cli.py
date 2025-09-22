@@ -110,9 +110,6 @@ def daily():
 
     if updated:
         save_data(data)
-        msg = "🔄 Auto-updated renewals:\n" + "\n".join(updated)
-        messages.append(msg)
-        click.echo(msg)
 
     else:
         msg = "✨ No renewals to update today"
