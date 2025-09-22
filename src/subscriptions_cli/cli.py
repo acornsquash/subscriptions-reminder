@@ -110,11 +110,6 @@ def daily():
 
     if updated:
         save_data(data)
-
-    else:
-        msg = "✨ No renewals to update today"
-        messages.append(msg)
-        click.echo(msg)
     
     email_body = "\n".join(messages)
     send_email("Subscriptions update", email_body)
