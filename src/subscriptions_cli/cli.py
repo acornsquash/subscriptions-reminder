@@ -73,6 +73,21 @@ def update(name, cost, renewal, interval, active):
         click.echo(f"🙅🏼‍♀️ Subscription not found: {name}")
 
 @cli.command()
+@click.argument("name")
+def remove(name):
+    """Remove a subscription by name"""
+    data = load_data()
+    updated_data = [sub for sub in data if sub["name"].lower() != name.lower()]
+    
+    if len(updated_data) == len(data):
+        click.echo(f"❌ No subscription found with name: {name}")
+    else:
+        save_data(updated_data)
+        click.echo(f"🗑️ Removed subscription: {name}")
+
+    
+
+@cli.command()
 def daily():
     data = load_data()
     today = datetime.today().date()
